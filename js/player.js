@@ -1,4 +1,4 @@
-const GamePlayer = (() => {
+functionion GamePlayer = (() => {
   const state = {
     x: 144,
     y: 64,
@@ -95,9 +95,7 @@ const GamePlayer = (() => {
         state.y += (dy / distance) * state.speed;
       }
     }
-  }
-
-  function draw(ctx, tileSize) {
+   function draw(ctx, tileSize) {
     if (state.pendingTile) {
       const tx = state.pendingTile.col * tileSize;
       const ty = state.pendingTile.row * tileSize;
@@ -105,11 +103,22 @@ const GamePlayer = (() => {
       ctx.strokeRect(tx + 2, ty + 2, tileSize - 4, tileSize - 4);
     }
 
-    ctx.fillStyle = state.color;
-    ctx.fillRect(state.x, state.y, state.width, state.height);
-  }
-
-  return {
+    if (typeof GameAssets !== "undefined") {
+      GameAssets.drawOrFallback(
+        ctx,
+        "player",
+        state.x,
+        state.y,
+        state.width,
+        state.height,
+        state.color
+      );
+    } else {
+      ctx.fillStyle = state.color;
+      ctx.fillRect(state.x, state.y, state.width, state.height);
+    }
+   }
+    return {
     init,
     setMoveTarget,
     update,
