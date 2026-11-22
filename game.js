@@ -3,11 +3,18 @@ const ctx = canvas.getContext("2d");
 ctx.imageSmoothingEnabled = false;
 
 const TILE_SIZE = 16;
-
-// Peta grid sederhana (0 = rumput, 1 = tanah garapan)
 const cols = Math.floor(canvas.width / TILE_SIZE);
 const rows = Math.floor(canvas.height / TILE_SIZE);
-const grid = Array.from({ length: rows }, () => Array(cols).fill(0));
+
+// Setiap petak menyimpan state:
+// state: 0 = rumput, 1 = tanah garapan
+// crop: null | { watered: boolean, growth: number, ready: boolean }
+const tiles = Array.from({ length: rows }, () =>
+  Array.from({ length: cols }, () => ({
+    state: 0,
+    crop: null
+  }))
+);
 
 const player = {
   x: 152,
@@ -17,10 +24,10 @@ const player = {
   speed: 1.5,
   targetX: null,
   targetY: null,
+  pendingTile: null, // menyimpan { col, row } untuk diinteraksi setelah sampai
   color: "#ffeaa7"
 };
 
-// Ubah koordinat sentuhan layar ke koordinat internal canvas (320x180)
 function getCanvasCoords(clientX, clientY) {
   const rect = canvas.getBoundingClientRect();
   const scaleX = canvas.width / rect.width;
@@ -32,16 +39,70 @@ function getCanvasCoords(clientX, clientY) {
   };
 }
 
+// Interaksi saat karakter tiba di petak tujuan
+function interactWithTile(col, row) {
+  if (row < 0 || row >= rows || col < 0 || col >= cols) return;
+  const tile = tiles[row][col];
+
+  // 1. Rumput -> Cangkul jadi tanah garapan
+  if (tile.state === 0) {
+    tile.state = 1;
+    return;
+  }
+
+  // 2. Tanah garapan kosong -> Tanam bibit
+  if (tile.state === 1 && !tile.crop) {
+    tile.crop = {
+      watered: false,
+      growth: 0,
+      ready: false
+    };
+    return;
+  }
+
+  // 3. Ada tanaman & belum disiram -> Siram
+  if (tile.crop && !tile.crop.watered && !tile.crop.ready) {
+    tile.crop.watered = true;
+    return;
+  }
+
+  // 4. Tanaman sudah siap panen -> Panen (kembali jadi tanah garapan)
+  if (tile.crop && tile.crop.ready) {
+    tile.crop = null;
+  }
+}
+
 canvas.addEventListener("pointerdown", (e) => {
   e.preventDefault();
   const pos = getCanvasCoords(e.clientX, e.clientY);
 
-  // Pusatkan tujuan ke tengah ukuran karakter
-  player.targetX = pos.x - player.width / 2;
-  player.targetY = pos.y - player.height / 2;
+  const col = Math.floor(pos.x / TILE_SIZE);
+  const row = Math.floor(pos.y / TILE_SIZE);
+
+  // Target gerak ke tengah petak yang disentuh
+  player.targetX = col * TILE_SIZE;
+  player.targetY = row * TILE_SIZE;
+  player.pendingTile = { col, row };
 });
 
+function updateCrops() {
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const crop = tiles[r][c].crop;
+      if (crop && crop.watered && !crop.ready) {
+        crop.growth += 1;
+        // Sekitar 3 detik pada 60fps setelah disiram langsung siap panen untuk tes cepat
+        if (crop.growth >= 180) {
+          crop.ready = true;
+        }
+      }
+    }
+  }
+}
+
 function update() {
+  updateCrops();
+
   if (player.targetX !== null && player.targetY !== null) {
     const dx = player.targetX - player.x;
     const dy = player.targetY - player.y;
@@ -52,6 +113,11 @@ function update() {
       player.y = player.targetY;
       player.targetX = null;
       player.targetY = null;
+
+      if (player.pendingTile) {
+        interactWithTile(player.pendingTile.col, player.pendingTile.row);
+        player.pendingTile = null;
+      }
     } else {
       player.x += (dx / distance) * player.speed;
       player.y += (dy / distance) * player.speed;
@@ -62,15 +128,32 @@ function update() {
 function drawGrid() {
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
+      const tile = tiles[r][c];
       const tileX = c * TILE_SIZE;
       const tileY = r * TILE_SIZE;
 
-      ctx.fillStyle = grid[r][c] === 1 ? "#b87a3d" : "#4ea853";
+      // Warna dasar: rumput hijau, tanah garapan cokelat, tanah disiram cokelat lebih gelap
+      if (tile.state === 0) {
+        ctx.fillStyle = "#4ea853";
+      } else {
+        ctx.fillStyle = tile.crop && tile.crop.watered ? "#7c4d25" : "#b87a3d";
+      }
       ctx.fillRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
 
-      // Garis grid tipis untuk membantu melihat petak saat prototipe
+      // Garis petak tipis
       ctx.strokeStyle = "rgba(0, 0, 0, 0.08)";
       ctx.strokeRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
+
+      // Gambar placeholder tanaman (bibit kecil vs tanaman siap panen)
+      if (tile.crop) {
+        if (tile.crop.ready) {
+          ctx.fillStyle = "#ffeaa7";
+          ctx.fillRect(tileX + 3, tileY + 3, 10, 10);
+        } else {
+          ctx.fillStyle = "#badc58";
+          ctx.fillRect(tileX + 6, tileY + 6, 4, 4);
+        }
+      }
     }
   }
 }
@@ -106,4 +189,4 @@ function gameLoop() {
 }
 
 gameLoop();
-                                       
+                          
