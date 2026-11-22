@@ -106,33 +106,97 @@ const GameWorld = (() => {
     }
   }
 
-  function draw(ctx) {
+    function draw(ctx) {
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
         const tile = tiles[r][c];
         const tileX = c * TILE_SIZE;
         const tileY = r * TILE_SIZE;
 
-        if (tile.state === 0) {
-          ctx.fillStyle = "#4ea853";
+        if (typeof GameAssets !== "undefined") {
+          if (tile.state === 0) {
+            GameAssets.drawOrFallback(
+              ctx,
+              "grass",
+              tileX,
+              tileY,
+              TILE_SIZE,
+              TILE_SIZE,
+              "#4ea853"
+            );
+          } else {
+            const isWet = tile.crop && tile.crop.watered;
+            GameAssets.drawOrFallback(
+              ctx,
+              isWet ? "dirt_wet" : "dirt",
+              tileX,
+              tileY,
+              TILE_SIZE,
+              TILE_SIZE,
+              isWet ? "#7c4d25" : "#b87a3d"
+            );
+          }
         } else {
-          ctx.fillStyle = tile.crop && tile.crop.watered ? "#7c4d25" : "#b87a3d";
+          if (tile.state === 0) {
+            ctx.fillStyle = "#4ea853";
+          } else {
+            ctx.fillStyle = tile.crop && tile.crop.watered ? "#7c4d25" : "#b87a3d";
+          }
+          ctx.fillRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
         }
-        ctx.fillRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
 
         ctx.strokeStyle = "rgba(0, 0, 0, 0.08)";
         ctx.strokeRect(tileX, tileY, TILE_SIZE, TILE_SIZE);
 
         if (tile.crop) {
           if (tile.crop.ready) {
-            ctx.fillStyle = "#ffeaa7";
-            ctx.fillRect(tileX + 3, tileY + 3, 10, 10);
+            if (typeof GameAssets !== "undefined") {
+              GameAssets.drawOrFallback(
+                ctx,
+                "crop_ripe",
+                tileX,
+                tileY,
+                TILE_SIZE,
+                TILE_SIZE,
+                "#ffeaa7",
+                3
+              );
+            } else {
+              ctx.fillStyle = "#ffeaa7";
+              ctx.fillRect(tileX + 3, tileY + 3, 10, 10);
+            }
           } else if (tile.crop.growth >= 90) {
-            ctx.fillStyle = "#78e08f";
-            ctx.fillRect(tileX + 5, tileY + 5, 6, 6);
+            if (typeof GameAssets !== "undefined") {
+              GameAssets.drawOrFallback(
+                ctx,
+                "crop_sprout",
+                tileX,
+                tileY,
+                TILE_SIZE,
+                TILE_SIZE,
+                "#78e08f",
+                5
+              );
+            } else {
+              ctx.fillStyle = "#78e08f";
+              ctx.fillRect(tileX + 5, tileY + 5, 6, 6);
+            }
           } else {
-            ctx.fillStyle = "#badc58";
-            ctx.fillRect(tileX + 6, tileY + 6, 4, 4);
+            if (typeof GameAssets !== "undefined") {
+              GameAssets.drawOrFallback(
+                ctx,
+                "crop_seed",
+                tileX,
+                tileY,
+                TILE_SIZE,
+                TILE_SIZE,
+                "#badc58",
+                6
+              );
+            } else {
+              ctx.fillStyle = "#badc58";
+              ctx.fillRect(tileX + 6, tileY + 6, 4, 4);
+            }
           }
         }
       }
@@ -149,8 +213,8 @@ const GameWorld = (() => {
       );
       ctx.lineWidth = 1;
     }
-  }
-
+              }
+  
   function getTileSize() {
     return TILE_SIZE;
   }
