@@ -5,7 +5,10 @@
 
   const tileSize = GameWorld.getTileSize();
 
-  // Inisialisasi dunia, karakter, dan hotbar inventori
+  // Inisialisasi dunia, inventori, dan hotbar inventori
+    if (typeof GameAssets !== "undefined") {
+    GameAssets.init();
+    }
   GameWorld.init(canvas.width, canvas.height);
   GamePlayer.init(144, 64);
   if (typeof GameInventory !== "undefined") {
