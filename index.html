@@ -7,10 +7,27 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="game-container">
-    <canvas id="gameCanvas" width="320" height="180"></canvas>
+  <div id="portrait-warning">
+    <p>Putar HP ke posisi <strong>Landscape</strong> untuk bermain.</p>
   </div>
 
-  <script src="game.js"></script>
+  <div id="game-wrapper">
+    <div id="hud-top">
+      <span id="hud-day">Day 1</span>
+      <span id="hud-time">06:00</span>
+    </div>
+
+    <div id="canvas-area">
+      <canvas id="gameCanvas" width="320" height="160"></canvas>
+    </div>
+
+    <div id="hotbar" aria-label="Inventori"></div>
+  </div>
+
+  <script src="js/time.js"></script>
+  <script src="js/inventory.js"></script>
+  <script src="js/world.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/main.js"></script>
 </body>
 </html>
